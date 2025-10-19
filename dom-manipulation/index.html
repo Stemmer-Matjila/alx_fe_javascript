@@ -1,21 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>To-Do List Application</title>
-    <link rel="stylesheet" href="styles.css">
-    
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Quote Generator</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="todo-app">
-        <h1>My To-Do List</h1>
-        <input type="text" id="task-input" placeholder="Enter a new task">
-        <button id="add-task-btn">Add Task</button>
-        <ul id="task-list">
-            <!-- Tasks will be listed here -->
-        </ul>
-    </div>
-    <script src="script.js"></script>
+  <h1>Dynamic Quote Generator</h1>
+
+  <label for="categorySelect">Choose Category:</label>
+  <select id="categorySelect"></select>
+  
+  <div id="quoteDisplay">Select a category and click "Show New Quote".</div>
+  <button id="newQuote">Show New Quote</button>
+
+  <div class="form-container">
+    <h3>Add a New Quote</h3>
+    <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
+    <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
+    <button id="addQuoteBtn">Add Quote</button>
+  </div>
+  <select id="categoryFilter" title="categories" onchange="filterQuotes()">
+    <option value="all">All Categories</option>
+    <option value="Technology">Technology</option>
+    <option value="Wisdom">Wisdom</option>
+    <option value="Motivation">Motivation</option>
+    <option value="Inspiration">Inspiration</option>
+    
+    <!-- Dynamically populated categories -->
+  </select>
+
+  <script src="script.js"></script>
 </body>
 </html>
