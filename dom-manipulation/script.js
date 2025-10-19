@@ -443,6 +443,99 @@ async function syncWithServer({ showNotification = true } = {}) {
   lastSync = new Date();
   if (showNotification) renderSyncBanner("Synced with server", pendingConflicts.length);
 }
+// ---------------------------------------------
+// Sync local quotes with server
+// ---------------------------------------------
+let pendingConflicts = [];
+let lastSync = null;
+const syncIntervalMs = 60000; // 60 seconds
+
+// Fetch quotes from server (simulate GET)
+async function fetchServerQuotes() {
+  try {
+    const resp = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=20");
+    if (!resp.ok) throw new Error("Failed to fetch server quotes");
+    const data = await resp.json();
+
+    // Convert to quote objects
+    return data.map(post => ({
+      text: post.title.trim(),
+      category: "Server"
+    }));
+  } catch (err) {
+    console.error("fetchServerQuotes error:", err);
+    return [];
+  }
+}
+
+// Detect conflicts between local and server quotes
+function detectConflicts(local, server) {
+  return server.filter(sq => {
+    const match = local.find(lq => lq.text.toLowerCase() === sq.text.toLowerCase());
+    return match && match.category !== sq.category;
+  });
+}
+
+// Merge server quotes into local with server-wins strategy
+function mergeServerQuotes(serverQuotes) {
+  serverQuotes.forEach(sq => {
+    const localIdx = quotes.findIndex(q => q.text.toLowerCase() === sq.text.toLowerCase());
+    if (localIdx === -1) {
+      quotes.push(sq);
+    } else {
+      // server-wins
+      quotes[localIdx] = sq;
+    }
+  });
+}
+
+// Main sync function
+async function syncQuotes({ showNotification = true } = {}) {
+  const serverQuotes = await fetchServerQuotes();
+
+  // Detect conflicts
+  pendingConflicts = detectConflicts(quotes, serverQuotes);
+
+  // Merge server quotes
+  mergeServerQuotes(serverQuotes);
+
+  // Save to local storage
+  saveQuotes();
+
+  // Update categories
+  populateCategories();
+
+  // Update last sync time
+  lastSync = new Date();
+
+  // Optional notification
+  if (showNotification) {
+    renderSyncBanner(`Synced with server. Conflicts: ${pendingConflicts.length}`);
+  }
+}
+
+// Initialize periodic syncing
+function initSyncing() {
+  syncQuotes(); // initial sync
+  setInterval(() => {
+    syncQuotes({ showNotification: false }); // silent auto-sync
+  }, syncIntervalMs);
+}
+
+// Example UI notification function
+function renderSyncBanner(message) {
+  let banner = document.getElementById("syncBanner");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "syncBanner";
+    banner.style.padding = "10px";
+    banner.style.backgroundColor = "#dff0d8";
+    banner.style.color = "#3c763d";
+    banner.style.margin = "10px 0";
+    document.body.insertBefore(banner, document.body.firstChild);
+  }
+  banner.textContent = message;
+}
 
 
 // ---------- Event listeners ----------
@@ -459,6 +552,7 @@ populateCategories();
 restorePreferences();
 renderSyncBanner("Idle", 0);
 initSyncing();
+
 
 
 
