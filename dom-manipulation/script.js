@@ -64,4 +64,6 @@ let quotes = [
   
   // Initialize
   populateCategories();
+  createAddQuoteForm(); 
+
   
