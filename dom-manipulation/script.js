@@ -178,7 +178,7 @@ async function fetchServerQuotes() {
       category: "Server"
     }));
 
-    // --- For demonstration only: inject a conflict for a known local quote ---
+    
     // If local has the 'Do or do not' quote, create a server variant with same text but different category:
     const localExample = findQuoteByText("Do or do not. There is no try.");
     if (localExample) {
@@ -219,9 +219,8 @@ function applyServerResolution(conflict) {
 }
 
 function applyLocalResolution(conflict) {
-  // Keep local; in real app we'd send this to server. Here we just keep local (no-op)
-  // Optionally: mark for upload (not implemented)
-  // noop
+  // Keep local; in real app we'd send this to server. Here we just keep local
+  
 }
 
 async function syncWithServer({ showNotification = true } = {}) {
@@ -374,7 +373,7 @@ async function fetchQuotesFromServer() {
   }
 }
 
-// Example usage: fetch a server quote and display it
+// fetch a server quote and display it
 async function showServerQuote() {
   const quote = await fetchQuotesFromServer();
   if (quote) {
@@ -409,7 +408,7 @@ async function postQuoteToServer(quote) {
   }
 }
 
-// Example usage: post the last added quote
+// post the last added quote
 async function syncLatestQuote() {
   if (quotes.length === 0) return;
 
@@ -417,6 +416,33 @@ async function syncLatestQuote() {
   await postQuoteToServer(latestQuote);
 }
 
+async function syncWithServer({ showNotification = true } = {}) {
+  const serverQuotes = await fetchServerQuotes();
+  // conflicts
+  const conflicts = detectConflicts(quotes, serverQuotes);
+  // server-wins merge
+  serverQuotes.forEach(sq => {
+    const localIdx = quotes.findIndex(q => q.text.toLowerCase() === sq.text.toLowerCase());
+    if (localIdx === -1) {
+      quotes.push({ text: sq.text, category: sq.category });
+    } else {
+      if (quotes[localIdx].category !== sq.category) {
+        quotes[localIdx] = { text: sq.text, category: sq.category };
+      }
+    }
+  });
+
+  // De-duplicate & save
+  const merged = dedupeAndMergeLocal(quotes);
+  quotes = merged;
+  saveQuotes();
+  populateCategories();
+
+  // Keep pending conflicts for manual review
+  pendingConflicts = conflicts.slice();
+  lastSync = new Date();
+  if (showNotification) renderSyncBanner("Synced with server", pendingConflicts.length);
+}
 
 
 // ---------- Event listeners ----------
@@ -433,6 +459,7 @@ populateCategories();
 restorePreferences();
 renderSyncBanner("Idle", 0);
 initSyncing();
+
 
 
 
