@@ -1,85 +1,147 @@
-// Wait until the DOM is fully loaded before running any code
-document.addEventListener('DOMContentLoaded', function () {
+// ---------------------------------------------
+// Dynamic Quote Generator with Filtering + Storage
+// ---------------------------------------------
 
-    // --- Select key DOM elements ---
-    const addButton = document.getElementById('add-task-btn');  // "Add Task" button
-    const taskInput = document.getElementById('task-input');    // Input field
-    const taskList = document.getElementById('task-list');      // <ul> for tasks
+// Retrieve quotes from localStorage or use defaults
+let quotes = JSON.parse(localStorage.getItem("quotes")) || [
+  { text: "The best way to predict the future is to invent it.", category: "Motivation" },
+  { text: "Simplicity is the soul of efficiency.", category: "Technology" },
+  { text: "Do or do not. There is no try.", category: "Wisdom" },
+  { text: "Innovation distinguishes between a leader and a follower.", category: "Technology" },
+  { text: "Believe you can and you're halfway there.", category: "Inspiration" },
+];
 
-    // --- Initialize the tasks array ---
-    let tasks = [];
+// --- DOM Elements ---
+const quoteDisplay = document.getElementById("quoteDisplay");
+const newQuoteBtn = document.getElementById("newQuote");
+const addQuoteBtn = document.getElementById("addQuoteBtn");
+const categorySelect = document.getElementById("categorySelect");
+const categoryFilter = document.getElementById("categoryFilter");
+const newQuoteText = document.getElementById("newQuoteText");
+const newQuoteCategory = document.getElementById("newQuoteCategory");
 
-    // --- Load tasks from Local Storage ---
-    function loadTasks() {
-        const storedTasks = localStorage.getItem('tasks'); // Get saved tasks
-        if (storedTasks) {
-            tasks = JSON.parse(storedTasks); // Convert JSON back to array
-            tasks.forEach(taskText => createTaskElement(taskText)); // Show each saved task
-        }
-    }
+// ---------------------------------------------
+// Step 2: Populate Categories Dynamically
+// ---------------------------------------------
+function populateCategories() {
+  // Use map() to get all categories and Set to remove duplicates
+  const categories = [...new Set(quotes.map(q => q.category))];
 
-    // --- Save current tasks to Local Storage ---
-    function saveTasks() {
-        localStorage.setItem('tasks', JSON.stringify(tasks)); // Convert to JSON string and save
-    }
+  // Populate main category selector
+  categorySelect.innerHTML = "";
+  categories.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    categorySelect.appendChild(option);
+  });
 
-    // --- Create and display a task in the list ---
-    function createTaskElement(taskText) {
-        // Create <li> element for the task
-        const listItem = document.createElement('li');
-        listItem.textContent = taskText;
+  // Populate filter dropdown (include "All")
+  categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+  categories.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    categoryFilter.appendChild(option);
+  });
 
-        // Create "Remove" button
-        const removeButton = document.createElement('button');
-        removeButton.textContent = 'Remove';
-        removeButton.classList.add('remove-btn'); //  Using classList.add()
+  // Save quotes with updated categories
+  saveQuotes();
+}
 
-        // When "Remove" is clicked → delete from DOM and Local Storage
-        removeButton.addEventListener('click', function () {
-            taskList.removeChild(listItem); // Remove from page
+// ---------------------------------------------
+// Show a Random Quote from Selected Category
+// ---------------------------------------------
+function showRandomQuote() {
+  const selectedCategory = categorySelect.value;
+  const filteredQuotes = quotes.filter(q => q.category === selectedCategory);
 
-            // Remove from tasks array
-            tasks = tasks.filter(task => task !== taskText);
-            saveTasks(); // Update Local Storage
-        });
+  if (filteredQuotes.length === 0) {
+    quoteDisplay.textContent = "No quotes found in this category.";
+    return;
+  }
 
-        // Append button to list item, then list item to task list
-        listItem.appendChild(removeButton);
-        taskList.appendChild(listItem);
-    }
+  const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
+  quoteDisplay.textContent = filteredQuotes[randomIndex].text;
 
-    // --- Add a new task ---
-    function addTask() {
-        const taskText = taskInput.value.trim(); // Remove extra spaces
+  // Save the user's last selected category
+  localStorage.setItem("lastCategory", selectedCategory);
+}
 
-        if (taskText === '') {
-            alert('Please enter a task.');
-            return;
-        }
+// ---------------------------------------------
+// Step 3: Add New Quote + Update Dropdown
+// ---------------------------------------------
+function addQuote() {
+  const text = newQuoteText.value.trim();
+  const category = newQuoteCategory.value.trim();
 
-        // Add to array and update Local Storage
-        tasks.push(taskText);
-        saveTasks();
+  if (!text || !category) {
+    alert("Please enter both a quote and a category.");
+    return;
+  }
 
-        // Create task element in DOM
-        createTaskElement(taskText);
+  // Add new quote and update dropdowns
+  quotes.push({ text, category });
+  saveQuotes();
+  populateCategories();
 
-        // Clear input field
-        taskInput.value = '';
-    }
+  newQuoteText.value = "";
+  newQuoteCategory.value = "";
 
-    // --- Event Listeners ---
+  alert("Quote added successfully!");
+}
 
-    // Add task when "Add Task" button is clicked
-    addButton.addEventListener('click', addTask);
+// ---------------------------------------------
+// Step 2 (cont.): Filter Quotes by Category
+// ---------------------------------------------
+function filterQuotes() {
+  const selectedCategory = categoryFilter.value;
+  localStorage.setItem("lastFilter", selectedCategory); // Remember last filter
 
-    // Add task when "Enter" key is pressed
-    taskInput.addEventListener('keypress', function (event) {
-        if (event.key === 'Enter') {
-            addTask();
-        }
-    });
+  let filtered = quotes;
+  if (selectedCategory !== "all") {
+    filtered = quotes.filter(q => q.category === selectedCategory);
+  }
 
-    // --- Load tasks as soon as the page opens ---
-    loadTasks();
-});
+  if (filtered.length === 0) {
+    quoteDisplay.textContent = "No quotes found for this category.";
+  } else {
+    const randomIndex = Math.floor(Math.random() * filtered.length);
+    quoteDisplay.textContent = filtered[randomIndex].text;
+  }
+}
+
+// ---------------------------------------------
+// Save & Load Quotes in Local Storage
+// ---------------------------------------------
+function saveQuotes() {
+  localStorage.setItem("quotes", JSON.stringify(quotes));
+}
+
+// ---------------------------------------------
+// Restore Last Selected Category & Filter
+// ---------------------------------------------
+function restorePreferences() {
+  const lastCategory = localStorage.getItem("lastCategory");
+  const lastFilter = localStorage.getItem("lastFilter");
+
+  if (lastCategory && [...categorySelect.options].some(o => o.value === lastCategory)) {
+    categorySelect.value = lastCategory;
+  }
+
+  if (lastFilter && [...categoryFilter.options].some(o => o.value === lastFilter)) {
+    categoryFilter.value = lastFilter;
+  }
+}
+
+// ---------------------------------------------
+// Event Listeners
+// ---------------------------------------------
+newQuoteBtn.addEventListener("click", showRandomQuote);
+addQuoteBtn.addEventListener("click", addQuote);
+
+// ---------------------------------------------
+// Initialize on Page Load
+// ---------------------------------------------
+populateCategories();
+restorePreferences();
