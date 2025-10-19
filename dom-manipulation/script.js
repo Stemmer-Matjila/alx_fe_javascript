@@ -350,7 +350,7 @@ async function initSyncing() {
 // ---------------------------------------------
 // Fetch a single random quote from the server
 // ---------------------------------------------
-async function fetchQuoteFromServer() {
+async function fetchQuotesFromServer() {
   try {
     const resp = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=20");
     if (!resp.ok) throw new Error("Failed to fetch from server");
@@ -369,14 +369,14 @@ async function fetchQuoteFromServer() {
 
     return serverQuote;
   } catch (err) {
-    console.error("fetchQuoteFromServer error:", err);
+    console.error("fetchQuotesFromServer error:", err);
     return null;
   }
 }
 
 // Example usage: fetch a server quote and display it
 async function showServerQuote() {
-  const quote = await fetchQuoteFromServer();
+  const quote = await fetchQuotesFromServer();
   if (quote) {
     quoteDisplay.textContent = `"${quote.text}" — ${quote.category}`;
   } else {
@@ -403,4 +403,5 @@ populateCategories();
 restorePreferences();
 renderSyncBanner("Idle", 0);
 initSyncing();
+
 
