@@ -347,6 +347,48 @@ async function initSyncing() {
   }, syncIntervalMs);
 }
 
+// ---------------------------------------------
+// Fetch a single random quote from the server
+// ---------------------------------------------
+async function fetchQuoteFromServer() {
+  try {
+    const resp = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=20");
+    if (!resp.ok) throw new Error("Failed to fetch from server");
+
+    const data = await resp.json();
+
+    // Pick a random post
+    const randomIndex = Math.floor(Math.random() * data.length);
+    const post = data[randomIndex];
+
+    // Convert to quote object
+    const serverQuote = {
+      text: post.title.trim().replace(/\s+/g, " "),
+      category: "Server"
+    };
+
+    return serverQuote;
+  } catch (err) {
+    console.error("fetchQuoteFromServer error:", err);
+    return null;
+  }
+}
+
+// Example usage: fetch a server quote and display it
+async function showServerQuote() {
+  const quote = await fetchQuoteFromServer();
+  if (quote) {
+    quoteDisplay.textContent = `"${quote.text}" — ${quote.category}`;
+  } else {
+    quoteDisplay.textContent = "Failed to fetch server quote.";
+  }
+}
+
+// Optional: bind to a button
+// const serverQuoteBtn = document.getElementById("serverQuoteBtn");
+// serverQuoteBtn.addEventListener("click", showServerQuote);
+
+
 // ---------- Event listeners ----------
 newQuoteBtn.addEventListener("click", showRandomQuote);
 addQuoteBtn.addEventListener("click", addQuote);
@@ -361,3 +403,4 @@ populateCategories();
 restorePreferences();
 renderSyncBanner("Idle", 0);
 initSyncing();
+
