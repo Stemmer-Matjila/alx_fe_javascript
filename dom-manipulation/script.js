@@ -384,9 +384,39 @@ async function showServerQuote() {
   }
 }
 
-// Optional: bind to a button
-// const serverQuoteBtn = document.getElementById("serverQuoteBtn");
-// serverQuoteBtn.addEventListener("click", showServerQuote);
+// ---------------------------------------------
+// Send local quote to server (simulate POST)
+// ---------------------------------------------
+async function postQuoteToServer(quote) {
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(quote)
+    });
+
+    if (!response.ok) throw new Error(`Server POST failed with status ${response.status}`);
+    
+    const data = await response.json();
+    console.log("Quote successfully posted to server:", data);
+    return data;
+
+  } catch (error) {
+    console.error("postQuoteToServer error:", error);
+    return null;
+  }
+}
+
+// Example usage: post the last added quote
+async function syncLatestQuote() {
+  if (quotes.length === 0) return;
+
+  const latestQuote = quotes[quotes.length - 1];
+  await postQuoteToServer(latestQuote);
+}
+
 
 
 // ---------- Event listeners ----------
@@ -403,5 +433,6 @@ populateCategories();
 restorePreferences();
 renderSyncBanner("Idle", 0);
 initSyncing();
+
 
 
